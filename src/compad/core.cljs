@@ -45,45 +45,52 @@
                                  :creatures conj (apply new-creature (parse-entry @val)))
                           (set! (.-value (.-target e)) "")))}]])))
 
-(defn counter []
-  (let [count-state (atom 0)]
-    (fn [parent-state {:keys [value visible? position close]}]
+(defn counter-pane []
+  (let [internal-state (atom 0)
+        button (fn [amount]
+                 [:button {:on-click #(swap! internal-state + amount)} (with-sign amount)])]
+    (fn [parent-state {:keys [visible? position close]}]
       (let [[x y] position
             close' (fn []
-                     (reset! count-state 0)
+                     (reset! internal-state 0)
                      (close))]
-        [:div {:class ["counter" (when (not visible?) "hidden")]
-               :style {:top (str y "px") :left (str x "px")}}
+        [:div.counter-pane {:class [(when (not visible?) "hidden")]
+                            :style {:top (str y "px") :left (str x "px")}}
          [:button {:on-click close'} "x"]
-         [:span.bold (str (+ value @count-state) " (" (with-sign @count-state) ")")]
-         [:button {:on-click #(swap! count-state + 10)} (with-sign 10)]
-         [:button {:on-click #(swap! count-state + 5)} (with-sign 5)]
-         [:button {:on-click #(swap! count-state + 1)} (with-sign 1)]
-         [:button {:on-click #(swap! count-state - 1)} (with-sign -1)]
+         [:span.bold (str (+ @parent-state @internal-state) " (" (with-sign @internal-state) ")")]
+         (button 10)
+         (button 5)
+         (button 1)
+         (button -1)
          [:button {:on-click (fn []
-                               (swap! parent-state + @count-state)
+                               (swap! parent-state + @internal-state)
                                (close'))} "✓"]]))))
 
-(defn creature []
-  (let [creature-state (atom {})
-        toggle-counter #(swap! creature-state update % not)]
-    (fn [{:keys [name init init-mod] :as creature} idx active?]
-      [:div {:class ["creature" (when active? "active")]}
-       [:div.name
-        [:span.bold name]
-        [:span.init-mod (with-sign init-mod)]]
-       [:div
-        [:span.init "Init: " init]
-        [:button {:on-click (fn [e]
-                              (let [pos (.getBoundingClientRect (.-target e))]
-                                (toggle-counter :init-visible?)
-                                (swap! creature-state assoc :counter-position [(.-x pos) (- (.-y pos) 2)])))}
-         "+"]
-        [counter (cursor app-state [:creatures idx :init])
-         {:value init
-          :visible? (:init-visible? @creature-state)
-          :position (:counter-position @creature-state)
-          :close (partial toggle-counter :init-visible?)}]]])))
+(defn counter-button
+  []
+  (let [internal-state (atom {})]
+    (fn [count-state]
+      [:div.flex
+       [:button {:on-click (fn [e]
+                             (let [pos (.getBoundingClientRect (.-target e))]
+                               (swap! internal-state assoc
+                                      count-state {:visible? true
+                                                   :position [(.-x pos) (- (.-y pos) 2)]})))}
+        "+"]
+       [counter-pane count-state
+        {:visible? (get-in @internal-state [count-state :visible?])
+         :position (get-in @internal-state [count-state :position])
+         :close #(swap! internal-state update-in [count-state :visible?] not)}]])))
+
+(defn creature
+  [{:keys [name init init-mod] :as creature} idx active?]
+   [:div.creature.flex {:class [(when active? "active")]}
+    [:div.name
+     [:span.bold name]
+     [:span.init-mod (with-sign init-mod)]]
+    [:div.flex
+     [:span.init "Init: " init]
+     [counter-button (cursor app-state [:creatures idx :init])]]])
 
 (defn next-creature []
   (let [{:keys [active-creature creatures round]} @app-state

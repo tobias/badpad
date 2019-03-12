@@ -3,6 +3,9 @@ div.creature {
     background-color: #ccc;
     padding: 5px;
     margin: 5px;
+}
+
+.flex {
     display: flex;
 }
 
@@ -22,7 +25,7 @@ div.creature span {
     font-weight: bold;
 }
 
-div.counter {
+div.counter-pane {
     position: absolute;
     background-color: #0cc;
     border: 1px;
