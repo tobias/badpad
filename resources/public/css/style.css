@@ -13,7 +13,7 @@ div.creature span {
     margin-left: 3px;
 }
 
-span.name {
+.bold {
     font-weight: bold;
 }
 
