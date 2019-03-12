@@ -1,0 +1,29 @@
+/* some style */
+div.creature {
+    background-color: #ccc;
+    padding: 5px;
+    margin: 5px;
+}
+
+div.active {
+    background-color: #0f0;
+}
+
+div.creature span {
+    margin-left: 3px;
+}
+
+span.name {
+    font-weight: bold;
+}
+
+div.counter {
+    position: absolute;
+    background-color: #0cc;
+    border: 1px;
+}
+
+.hidden {
+    display: none;
+} 
+
