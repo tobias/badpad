@@ -69,9 +69,11 @@
         toggle-counter #(swap! creature-state update % not)]
     (fn [{:keys [name init init-mod] :as creature} idx active?]
       [:div {:class ["creature" (when active? "active")]}
-       [:span.bold.name name]
-       [:span.init-mod (with-sign init-mod)]
-       [:span "Init: " init
+       [:div.name
+        [:span.bold name]
+        [:span.init-mod (with-sign init-mod)]]
+       [:div
+        [:span.init "Init: " init]
         [:button {:on-click (fn [e]
                               (let [pos (.getBoundingClientRect (.-target e))]
                                 (toggle-counter :init-visible?)

@@ -3,6 +3,11 @@ div.creature {
     background-color: #ccc;
     padding: 5px;
     margin: 5px;
+    display: flex;
+}
+
+div.name {
+    width: 20%;
 }
 
 div.active {
