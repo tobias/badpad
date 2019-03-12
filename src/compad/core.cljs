@@ -3,13 +3,6 @@
    [goog.dom :as gdom]
    [reagent.core :as reagent :refer [atom cursor]]))
 
-(defonce app-state (atom {:active-creature 0
-                          :round 1
-                          :creatures [{:name "Honk"
-                                       :init 10
-                                       :init-mod 8}]}))
-
-
 (defn get-app-element []
   (gdom/getElement "app"))
 
@@ -27,7 +20,13 @@
   [name init-mod]
   {:name name
    :init 10
+   :hp 10
+   :damage {:lethal 0 :non-lethal 0}
    :init-mod init-mod})
+
+(defonce app-state (atom {:active-creature 0
+                          :round 1
+                          :creatures [(new-creature "Honk" 8)]}))
 
 (defn add-creature []
   (let [val (atom nil)]
@@ -83,14 +82,22 @@
          :close #(swap! internal-state update-in [count-state :visible?] not)}]])))
 
 (defn creature
-  [{:keys [name init init-mod] :as creature} idx active?]
+  [{:keys [name damage hp init init-mod] :as creature} idx active?]
    [:div.creature.flex {:class [(when active? "active")]}
     [:div.name
      [:span.bold name]
      [:span.init-mod (with-sign init-mod)]]
     [:div.flex
      [:span.init "Init: " init]
-     [counter-button (cursor app-state [:creatures idx :init])]]])
+     [counter-button (cursor app-state [:creatures idx :init])]]
+    [:div.flex
+     [:span.hp "HP: " hp]
+     [counter-button (cursor app-state [:creatures idx :hp])]]
+    [:div.flex
+     [:span "Dmg - L: " (:lethal damage)]
+     [counter-button (cursor app-state [:creatures idx :damage :lethal])]
+     [:span "NL: " (:non-lethal damage)]
+     [counter-button (cursor app-state [:creatures idx :damage :non-lethal])]]])
 
 (defn next-creature []
   (let [{:keys [active-creature creatures round]} @app-state
