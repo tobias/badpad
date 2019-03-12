@@ -25,7 +25,7 @@
    :init-mod init-mod})
 
 (defonce app-state (atom {:active-creature 0
-                          :round 1
+                          :round 0
                           :creatures [(new-creature "Honk" 8)]}))
 
 (defn add-creature []
@@ -83,30 +83,47 @@
 
 (defn creature
   [{:keys [name damage hp init init-mod] :as creature} idx active?]
-   [:div.creature.flex {:class [(when active? "active")]}
-    [:div.name
-     [:span.bold name]
-     [:span.init-mod (with-sign init-mod)]]
-    [:div.flex
-     [:span.init "Init: " init]
-     [counter-button (cursor app-state [:creatures idx :init])]]
-    [:div.flex
-     [:span.hp "HP: " hp]
-     [counter-button (cursor app-state [:creatures idx :hp])]]
-    [:div.flex
-     [:span "Dmg - L: " (:lethal damage)]
-     [counter-button (cursor app-state [:creatures idx :damage :lethal])]
-     [:span "NL: " (:non-lethal damage)]
-     [counter-button (cursor app-state [:creatures idx :damage :non-lethal])]]])
+  [:div.creature.flex {:class [(when active? "active")]}
+   [:div.name
+    [:span.bold name]
+    [:span.init-mod (with-sign init-mod)]]
+   [:div.flex
+    [:span.init "Init: " init]
+    [counter-button (cursor app-state [:creatures idx :init])]]
+   [:div.flex
+    [:span.hp "HP: " hp]
+    [counter-button (cursor app-state [:creatures idx :hp])]]
+   [:div.flex
+    [:span "Dmg - L: " (:lethal damage)]
+    [counter-button (cursor app-state [:creatures idx :damage :lethal])]
+    [:span "NL: " (:non-lethal damage)]
+    [counter-button (cursor app-state [:creatures idx :damage :non-lethal])]]])
+
+(defn init-comparator
+  [a b]
+  (let [init-a (:init a)
+        init-b (:init b)]
+    (if (= init-a init-b)
+      (- (:init-mod b) (:init-mod a))
+      (- init-b init-a))))
+
+(defn sort-by-init
+  []
+  (swap! app-state update :creatures (partial sort init-comparator)))
 
 (defn next-creature []
   (let [{:keys [active-creature creatures round]} @app-state
-        next (inc active-creature)
-        updates (if (= next (count creatures))
-                  {:round (inc round)
-                   :active-creature 0}
-                  {:active-creature next})]
-    (swap! app-state merge updates)))
+        next-creature (inc active-creature)
+        next-round {:round (inc round)
+                    :active-creature 0}]
+    (swap! app-state merge (cond
+                             (= 0 round) (do
+                                           (sort-by-init)
+                                           next-round)
+
+                             (= next-creature (count creatures)) next-round
+
+                             :else {:active-creature next-creature}))))
 
 (defn encounter []
   (let [{:keys [active-creature creatures round]} @app-state]
