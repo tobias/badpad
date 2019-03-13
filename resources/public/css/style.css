@@ -9,6 +9,10 @@ div.creature {
     display: flex;
 }
 
+div.hp.ouch {
+    background-color: #c60;
+    color: #fff;
+}
 div.name {
     width: 20%;
 }

@@ -90,24 +90,25 @@
 
 (defn creature
   [{:keys [name damage hp init init-mod] :as creature} idx active?]
-  [:div.creature.flex {:class [(when active? "active")]}
-   [:div.name
-    [:span.bold name]
-    [:span.init-mod (with-sign init-mod)]]
-   [:div.flex
-    [:span.init "Init: " init]
-    [counter-button (cursor app-state [:creatures idx :init])]]
-   [:div.flex
-    [:span.hp "HP: " hp]
-    [counter-button (cursor app-state [:creatures idx :hp])]]
-   [:div.flex
-    [:span "Dmg - L: " (:lethal damage)]
-    [counter-button (cursor app-state [:creatures idx :damage :lethal])]
-    [:span "NL: " (:non-lethal damage)]
-    [counter-button (cursor app-state [:creatures idx :damage :non-lethal])]]
-   [:div
-    [:button {:on-click #(swap-creatures idx (dec idx))} "↑"]
-    [:button {:on-click #(swap-creatures idx (inc idx))} "↓"]]])
+  (let [{:keys [lethal non-lethal]} damage]
+    [:div.creature.flex {:class [(when active? "active")]}
+     [:div.name
+      [:span.bold name]
+      [:span.init-mod (with-sign init-mod)]]
+     [:div.flex
+      [:span.init "Init: " init]
+      [counter-button (cursor app-state [:creatures idx :init])]]
+     [:div.hp.flex {:class (when (>= (+ lethal non-lethal) hp) "ouch")}
+      [:span "HP: " hp]
+      [counter-button (cursor app-state [:creatures idx :hp])]
+      [:span "Dmg - L: " lethal]
+      [counter-button (cursor app-state [:creatures idx :damage :lethal])]
+      [:span "NL: " non-lethal]
+      [counter-button (cursor app-state [:creatures idx :damage :non-lethal])]]
+
+     [:div
+      [:button {:on-click #(swap-creatures idx (dec idx))} "↑"]
+      [:button {:on-click #(swap-creatures idx (inc idx))} "↓"]]]))
 
 (defn init-comparator
   [a b]
