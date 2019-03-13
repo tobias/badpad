@@ -41,7 +41,8 @@
                             (and (= 13 (.-which e))
                                  (not (empty? @val)))
                           (swap! app-state update
-                                 :creatures conj (apply new-creature (parse-entry @val)))
+                            :creatures conj (apply new-creature (parse-entry @val)))
+                          (reset! val nil)
                           (set! (.-value (.-target e)) "")))}]])))
 
 (defn counter-pane []
