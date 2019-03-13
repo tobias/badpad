@@ -81,6 +81,13 @@
          :position (get-in @internal-state [count-state :position])
          :close #(swap! internal-state update-in [count-state :visible?] not)}]])))
 
+(defn swap-creatures
+  [from to]
+  (if (<= 0 to (dec (count (:creatures @app-state))))
+    (let [creature-from (get-in @app-state [:creatures from])
+          creature-to (get-in @app-state [:creatures to])]
+      (swap! app-state update :creatures assoc from creature-to to creature-from))))
+
 (defn creature
   [{:keys [name damage hp init init-mod] :as creature} idx active?]
   [:div.creature.flex {:class [(when active? "active")]}
@@ -97,7 +104,10 @@
     [:span "Dmg - L: " (:lethal damage)]
     [counter-button (cursor app-state [:creatures idx :damage :lethal])]
     [:span "NL: " (:non-lethal damage)]
-    [counter-button (cursor app-state [:creatures idx :damage :non-lethal])]]])
+    [counter-button (cursor app-state [:creatures idx :damage :non-lethal])]]
+   [:div
+    [:button {:on-click #(swap-creatures idx (dec idx))} "↑"]
+    [:button {:on-click #(swap-creatures idx (inc idx))} "↓"]]])
 
 (defn init-comparator
   [a b]
