@@ -82,11 +82,20 @@
          :close #(swap! internal-state update-in [count-state :visible?] not)}]])))
 
 (defn swap-creatures
-  [from to]
-  (if (<= 0 to (dec (count (:creatures @app-state))))
-    (let [creature-from (get-in @app-state [:creatures from])
-          creature-to (get-in @app-state [:creatures to])]
-      (swap! app-state update :creatures assoc from creature-to to creature-from))))
+  [a-idx b-idx]
+  (let [creatures (:creatures @app-state)]
+    (if (<= 0 b-idx (dec (count creatures)))
+      (let [creature-a (nth creatures a-idx)
+            creature-b (nth creatures b-idx)]
+        (swap! app-state update :creatures assoc
+               a-idx creature-b
+               b-idx creature-a)))))
+
+(defn remove-creature
+  [idx]
+  (swap! app-state update :creatures #(vec
+                                        (concat (take idx %)
+                                                (drop (inc idx) %)))))
 
 (defn creature
   [{:keys [name damage hp init init-mod] :as creature} idx active?]
@@ -108,7 +117,10 @@
 
      [:div
       [:button {:on-click #(swap-creatures idx (dec idx))} "↑"]
-      [:button {:on-click #(swap-creatures idx (inc idx))} "↓"]]]))
+      [:button {:on-click #(swap-creatures idx (inc idx))} "↓"]]
+
+     [:div
+      [:button {:on-click #(remove-creature idx)} "x"]]]))
 
 (defn init-comparator
   [a b]
