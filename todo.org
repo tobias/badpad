@@ -1,0 +1,22 @@
+* Encounter management [0/4]
+  - [ ] encounter menu
+  - [ ] Party entry
+  - [ ] Copy PCs to encounter
+  - [ ] scope state tp encounter
+* Adding creatures [1/1]
+  - [X] text field w/init parsing
+* Adding conditions [0/3]
+  - [ ] conditions dropdown
+  - [ ] add rounds
+  - [ ] count down rounds
+* Creature extras [5/6]
+  - [X] lethal and non-lethal damge
+  - [X] HP
+  - [X] Reorder
+  - [X] Sort by init
+  - [X] Highlight when dmg > HP
+  - [ ] Delay/ready
+* Misc [2/3]
+  - [X] Use vector instead of map for creatures
+  - [X] Removal
+  - [ ] Undo
