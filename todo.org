@@ -16,7 +16,7 @@
   - [X] Sort by init
   - [X] Highlight when dmg > HP
   - [ ] Delay/ready
-* Misc [2/3]
+* Misc [3/3]
   - [X] Use vector instead of map for creatures
   - [X] Removal
-  - [ ] Undo
+  - [X] Undo

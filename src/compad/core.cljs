@@ -1,7 +1,29 @@
 (ns ^:figwheel-hooks compad.core
   (:require
+   [clojure.pprint :as pprint]
    [goog.dom :as gdom]
    [reagent.core :as reagent :refer [atom cursor]]))
+
+(defonce app-state (atom {:active-creature 0
+                          :round 0
+                          :creatures []}))
+
+(defonce undo-stack (atom '()))
+
+(def in-undo (atom false))
+
+(defn store-undo-state
+  [_ _ old-state new-state]
+  (when-not @in-undo
+    (swap! undo-stack #(cons old-state %))))
+
+(defn undo
+  []
+  (when-let [state (first @undo-stack)]
+    (swap! undo-stack rest)
+    (reset! in-undo true)
+    (reset! app-state state)
+    (reset! in-undo false)))
 
 (defn get-app-element []
   (gdom/getElement "app"))
@@ -23,10 +45,6 @@
    :hp 10
    :damage {:lethal 0 :non-lethal 0}
    :init-mod init-mod})
-
-(defonce app-state (atom {:active-creature 0
-                          :round 0
-                          :creatures [(new-creature "Honk" 8)]}))
 
 (defn add-creature []
   (let [val (atom nil)]
@@ -132,8 +150,8 @@
       (- init-b init-a))))
 
 (defn sort-by-init
-  []
-  (swap! app-state update :creatures (partial sort init-comparator)))
+  [creatures]
+  (vec (sort init-comparator creatures)))
 
 (defn next-creature []
   (let [{:keys [active-creature creatures round]} @app-state
@@ -141,27 +159,35 @@
         next-round {:round (inc round)
                     :active-creature 0}]
     (swap! app-state merge (cond
-                             (= 0 round) (do
-                                           (sort-by-init)
-                                           next-round)
+                             (= 0 round)
+                             (assoc next-round
+                               :creatures (sort-by-init creatures))
 
                              (= next-creature (count creatures)) next-round
 
                              :else {:active-creature next-creature}))))
 
+(defn debug-out
+  [n v]
+  [:pre
+   (str n ":\n\n")
+   (with-out-str (pprint/pprint v))])
+
 (defn encounter []
   (let [{:keys [active-creature creatures round]} @app-state]
     [:div
-     [:div (str @app-state)]
      [add-creature]
      [:div.controls
       [:span.round "Round: " round]
-      [:button.next {:on-click next-creature} ">>"]]
+      [:button.next {:on-click next-creature} ">>"]
+      [:button.undo {:on-click undo} "undo"]]
      [:div
       (map-indexed
         (fn [idx c]
           ^{:key idx} [creature c idx (= idx active-creature)])
-        creatures)]]))
+        creatures)]
+     (debug-out "state" @app-state)
+     (debug-out "undo stack" @undo-stack)]))
 
 (defn mount [el]
   (reagent/render-component [encounter] el))
@@ -177,6 +203,7 @@
 ;; specify reload hook with ^;after-load metadata
 (defn ^:after-load on-reload []
   (mount-app-element)
+  (add-watch app-state :undo-stack store-undo-state)
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
   ;; (swap! app-state update-in [:__figwheel_counter] inc)
