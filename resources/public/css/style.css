@@ -1,4 +1,12 @@
-/* some style */
+div.container {
+    display: flex;
+}
+div.sidebar {
+}
+
+div.encounter {
+}
+
 div.creature {
     background-color: #ccc;
     padding: 5px;
@@ -19,6 +27,10 @@ div.name {
 
 div.active {
     background-color: #0f0;
+}
+
+div.creature > * {
+    margin: auto;
 }
 
 div.creature span {

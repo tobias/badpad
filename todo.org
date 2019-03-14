@@ -1,8 +1,8 @@
-* Encounter management [0/4]
-  - [ ] encounter menu
-  - [ ] Party entry
-  - [ ] Copy PCs to encounter
-  - [ ] scope state tp encounter
+* Encounter management [4/4]
+  - [X] encounter menu
+  - [X] Party entry
+  - [X] Copy PCs to encounter
+  - [X] scope state tp encounter
 * Adding creatures [1/1]
   - [X] text field w/init parsing
 * Adding conditions [0/3]
