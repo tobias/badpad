@@ -2,6 +2,7 @@
   (:require
    [clojure.pprint :as pprint]
    [goog.dom :as gdom]
+   [historian.core :as hist]
    [reagent.core :as reagent :refer [atom cursor]]))
 
 (defn new-encounter-state
@@ -12,26 +13,11 @@
 
 (defonce current-encounter (atom (new-encounter-state [])))
 
+(hist/record! current-encounter :current-encounter)
+
 (defonce encounters (atom []))
 
 (defonce party (atom []))
-
-(defonce undo-stack (atom '()))
-
-(defonce in-undo (atom false))
-
-(defn store-undo-state
-  [_ _ old-state new-state]
-  (when-not @in-undo
-    (swap! undo-stack #(cons old-state %))))
-
-(defn undo
-  []
-  (when-let [state (first @undo-stack)]
-    (swap! undo-stack rest)
-    (reset! in-undo true)
-    (reset! current-encounter state)
-    (reset! in-undo false)))
 
 (defn get-app-element []
   (gdom/getElement "app"))
@@ -211,7 +197,7 @@
       [:div.left
        [:span.round "Round: " round]
        [:button.next {:on-click next-creature} ">>"]
-       [:button.undo {:on-click undo} "undo"]]
+       [:button.undo {:on-click hist/undo!} "undo"]]
       [:div.left
        [add-creature (cursor current-encounter [:creatures]) false]]
       [:div.clear]]
@@ -219,10 +205,12 @@
       (map-indexed
         (fn [idx c]
           ^{:key (:key c)} [creature c (cursor current-encounter [:creatures])
-                            idx (= idx active-creature)])
+                            idx
+                            (and
+                              (= idx active-creature)
+                              (< 0 round))])
         creatures)]
-     (debug-out "state" @current-encounter)
-     (debug-out "undo stack" @undo-stack)]))
+     (debug-out "state" @current-encounter)]))
 
 (defn sidebar []
   [:div#sidebar
@@ -264,5 +252,4 @@
 
 ;; specify reload hook with ^;after-load metadata
 (defn ^:after-load on-reload []
-  (mount-app-element)
-  (add-watch current-encounter :undo-stack store-undo-state))
+  (mount-app-element))
