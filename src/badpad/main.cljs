@@ -206,10 +206,12 @@
     [:div#encounter
      [:div.controls
       [:div.left
-       [:span.round "Round: " round]
+       [:span.round "Round:"
+        [:span.bold round]]
        [:button.next {:on-click next-creature} ">>"]
-       [:button.undo {:on-click hist/undo!} "undo"]]
-      [:div.left
+       [:button.undo {:on-click hist/undo!} "undo"]
+       [:button.redo {:on-click hist/redo!} "redo"]]
+      [:div.right
        [add-creature (cursor current-encounter [:creatures]) false]]
       [:div.clear]]
      [:div
