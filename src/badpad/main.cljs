@@ -48,19 +48,20 @@
 
 (defn new-creature
   ([pc? name init-mod]
-   (new-creature pc? name init-mod 10 10))
-  ([pc? name init-mod init hp]
+   (new-creature pc? name init-mod 10 10 0))
+  ([pc? name init-mod init hp mc]
    {:name name
     :key (random-uuid)
     :pc? pc?
     :init init
     :hp hp
+    :morale-threshold mc
     :damage {:lethal 0 :non-lethal 0}
     :init-mod init-mod}))
 
 (reset! encounters
   [{:name "A1"
-    :creatures [(new-creature false "goblin" 4 15 3)]}])
+    :creatures [(new-creature false "goblin" 4 15 20 10)]}])
 
 (defn add-creature []
   (let [val (atom nil)]
@@ -134,7 +135,8 @@
                    (drop (inc idx) %)))))
 
 (defn creature
-  [{:keys [name damage hp init init-mod pc?] :as creature} parent idx active?]
+  [{:keys [name damage hp init init-mod morale-threshold pc?] :as creature}
+   parent idx active?]
   (let [{:keys [lethal non-lethal]} damage]
     [:div.creature.flex {:class [(when active? "active")]}
      [:div.name.left
@@ -144,9 +146,14 @@
       [:span.init "Init: " init]
       [counter-button (cursor parent [idx :init])]]
      (when-not pc?
-       [:div.hp.flex.left {:class (when (>= (+ lethal non-lethal) hp) "ouch")}
+       [:div.hp.flex.left
+        {:class (cond
+                  (>= (+ lethal non-lethal) hp)       "ouch"
+                  (>= lethal (- hp morale-threshold)) "flee")}
         [:span "HP: " hp]
         [counter-button (cursor parent [idx :hp])]
+        [:span "MC: " morale-threshold]
+        [counter-button (cursor parent [idx :morale-threshold])]
         [:span "Dmg - L: " lethal]
         [counter-button (cursor parent [idx :damage :lethal])]
         [:span "NL: " non-lethal]

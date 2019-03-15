@@ -9,13 +9,14 @@
   - [ ] conditions dropdown
   - [ ] add rounds
   - [ ] count down rounds
-* Creature extras [5/6]
+* Creature extras [6/7]
   - [X] lethal and non-lethal damge
   - [X] HP
   - [X] Reorder
   - [X] Sort by init
   - [X] Highlight when dmg > HP
   - [ ] Delay/ready
+  - [X] Morale condition
 * Misc [3/3]
   - [X] Use vector instead of map for creatures
   - [X] Removal

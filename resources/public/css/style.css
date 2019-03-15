@@ -57,6 +57,11 @@ div.hp.ouch {
     background-color: #c60;
     color: #fff;
 }
+
+div.hp.flee {
+    background-color: yellow;
+}
+
 div.name {
     width: 20%;
 }
@@ -86,7 +91,7 @@ div.creature span {
 div.counter-pane {
     position: fixed;
     background-color: #0cc;
-    border: 1px;
+    border: 2px solid black;
     z-index: 100;
 }
 
