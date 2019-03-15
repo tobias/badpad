@@ -1,20 +1,56 @@
-div.container {
-    display: flex;
-}
-div.sidebar {
+.left {
+    float: left;
 }
 
-div.encounter {
+.clear {
+    clear: left;
 }
 
-div.creature {
-    background-color: #ccc;
-    padding: 5px;
-    margin: 5px;
+button {
+    color: white;
+    Background-color: #444;
 }
 
 .flex {
     display: flex;
+}
+
+div.container {
+    display: flex;
+    font-family: sans-serif;
+}
+
+#sidebar {
+    margin-right: 5px;
+}
+
+#sidebar .section {
+    margin-bottom: 8px;
+}
+
+#sidebar .header {
+    font-weight: bold;
+}
+
+#sidebar .encounter {
+    width: 100%;
+}
+
+#encounter {
+    width: 100%;
+}
+
+div.pc {
+    background-color: #ccc;
+    padding: 3px;
+    margin-top: 3px;
+}
+
+div.creature {
+    position: relative;
+    background-color: #ccc;
+    padding: 5px;
+    margin: 5px;
 }
 
 div.hp.ouch {
@@ -30,11 +66,17 @@ div.active {
 }
 
 div.creature > * {
-    margin: auto;
+    //margin: auto;
 }
 
 div.creature span {
     margin-left: 3px;
+}
+
+.creature-controls {
+    position: absolute;
+    top: 1px;
+    right: 1px;
 }
 
 .bold {
@@ -42,9 +84,10 @@ div.creature span {
 }
 
 div.counter-pane {
-    position: absolute;
+    position: fixed;
     background-color: #0cc;
     border: 1px;
+    z-index: 100;
 }
 
 .hidden {

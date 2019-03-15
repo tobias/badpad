@@ -52,7 +52,7 @@
   ([pc? name init-mod init hp]
    {:name name
     :key (random-uuid)
-    :pc pc?
+    :pc? pc?
     :init init
     :hp hp
     :damage {:lethal 0 :non-lethal 0}
@@ -83,12 +83,12 @@
         button (fn [amount]
                  [:button {:on-click #(swap! internal-state + amount)} (with-sign amount)])]
     (fn [parent-state {:keys [visible? position close]}]
-      (let [[x y] position
+      (let [[left top] position
             close' (fn []
                      (reset! internal-state 0)
                      (close))]
         [:div.counter-pane {:class [(when (not visible?) "hidden")]
-                            :style {:top (str y "px") :left (str x "px")}}
+                            :style {:top (str top "px") :left (str left "px")}}
          [:button {:on-click close'} "x"]
          [:span.bold (str (+ @parent-state @internal-state) " (" (with-sign @internal-state) ")")]
          (button 10)
@@ -104,11 +104,13 @@
   (let [internal-state (atom {})]
     (fn [count-state]
       [:div.flex
-       [:button {:on-click (fn [e]
-                             (let [pos (.getBoundingClientRect (.-target e))]
+       [:button
+        {:on-click (fn [e]
+                     (let [pos (.getBoundingClientRect (.-target e))]
                                (swap! internal-state assoc
                                  count-state {:visible? true
-                                              :position [(.-x pos) (- (.-y pos) 2)]})))}
+                                              :position [(.-left pos)
+                                                         (.-top pos)]})))}
         "+"]
        [counter-pane count-state
         (assoc (select-keys (get @internal-state count-state)
@@ -135,20 +137,21 @@
   [{:keys [name damage hp init init-mod pc?] :as creature} parent idx active?]
   (let [{:keys [lethal non-lethal]} damage]
     [:div.creature.flex {:class [(when active? "active")]}
-     [:div.name
+     [:div.name.left
       [:span.bold name]
       [:span.init-mod (with-sign init-mod)]]
-     [:div.flex
+     [:div.flex.left
       [:span.init "Init: " init]
       [counter-button (cursor parent [idx :init])]]
      (when-not pc?
-       [:div.hp.flex {:class (when (>= (+ lethal non-lethal) hp) "ouch")}
+       [:div.hp.flex.left {:class (when (>= (+ lethal non-lethal) hp) "ouch")}
         [:span "HP: " hp]
         [counter-button (cursor parent [idx :hp])]
         [:span "Dmg - L: " lethal]
         [counter-button (cursor parent [idx :damage :lethal])]
         [:span "NL: " non-lethal]
         [counter-button (cursor parent [idx :damage :non-lethal])]])
+     [:div.clear]
 
      [:div.creature-controls
       [:button {:on-click #(swap-creatures idx (dec idx))} "↑"]
@@ -196,12 +199,15 @@
 
 (defn encounter []
   (let [{:keys [active-creature creatures round]} @current-encounter]
-    [:div.encounter
-     [:div.flex
-      [:span.round "Round: " round]
-      [:button.next {:on-click next-creature} ">>"]
-      [:button.undo {:on-click undo} "undo"]
-      [add-creature (cursor current-encounter [:creatures]) false]]
+    [:div#encounter
+     [:div.controls
+      [:div.left
+       [:span.round "Round: " round]
+       [:button.next {:on-click next-creature} ">>"]
+       [:button.undo {:on-click undo} "undo"]]
+      [:div.left
+       [add-creature (cursor current-encounter [:creatures]) false]]
+      [:div.clear]]
      [:div
       (map-indexed
         (fn [idx c]
@@ -212,24 +218,25 @@
      (debug-out "undo stack" @undo-stack)]))
 
 (defn sidebar []
-  [:div.sidebar
-   [:div
-    [:span "Party"]
+  [:div#sidebar
+   [:div.section
+    [:span.header "Party"]
     [add-creature party :pc]
     (map-indexed
       (fn [idx {:keys [key] :as p}]
         ^{:key key} [pc p party idx])
       @party)
     ]
-   [:div
-    [:span "Encounters"
-     (map
-       (fn [{:keys [name creatures]}]
-         [:button
-          {:on-click #(reset! current-encounter
-                        (new-encounter-state (concat @party creatures)))}
-          name])
-       @encounters)]]
+   [:div.section
+    [:span.header "Encounters"]
+    (map
+      (fn [{:keys [name creatures]}]
+        ^{:key name} [:div.encounter
+                      [:button.encounter
+                       {:on-click #(reset! current-encounter
+                                     (new-encounter-state (concat @party creatures)))}
+              name]])
+      @encounters)]
    ])
 
 (defn container []
