@@ -1,4 +1,4 @@
-(ns ^:figwheel-hooks compad.core
+(ns ^:figwheel-hooks badpad.main
   (:require
    [clojure.pprint :as pprint]
    [goog.dom :as gdom]
