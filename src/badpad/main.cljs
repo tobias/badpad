@@ -122,28 +122,38 @@
 
 (defn creature
   [{:keys [name damage hp init init-mod morale-threshold pc?] :as creature}
-   parent idx active?]
+   parent idx started? active?]
   (let [{:keys [lethal non-lethal]} damage]
     [:div.creature.flex {:class [(when active? "active")]}
      [:div.name.left
       [:span.bold name]
       [:span.init-mod (with-sign init-mod)]]
      [:div.flex.left
-      [:span.init "Init: " init]
-      [counter-button (cursor parent [idx :init])]]
+      [:span.init "Init:"
+       [:span.bold init]]
+      (when-not started?
+        [counter-button (cursor parent [idx :init])])]
      (when-not pc?
        [:div.hp.flex.left
         {:class (cond
                   (>= (+ lethal non-lethal) hp)       "ouch"
                   (>= lethal (- hp morale-threshold)) "flee")}
-        [:span "HP: " hp]
-        [counter-button (cursor parent [idx :hp])]
-        [:span "MC: " morale-threshold]
-        [counter-button (cursor parent [idx :morale-threshold])]
-        [:span "Dmg - L: " lethal]
-        [counter-button (cursor parent [idx :damage :lethal])]
-        [:span "NL: " non-lethal]
-        [counter-button (cursor parent [idx :damage :non-lethal])]])
+        [:span "HP:"
+         [:span.bold hp]]
+        (when-not started?
+          [counter-button (cursor parent [idx :hp])])
+        [:span "MC:"
+         [:span.bold morale-threshold]]
+        (when-not started?
+          [counter-button (cursor parent [idx :morale-threshold])])
+        (when started?
+          (list
+            [:span "L:"
+             [:span.bold lethal]]
+            [counter-button (cursor parent [idx :damage :lethal])]
+            [:span "NL:"
+             [:span.bold non-lethal]]
+            [counter-button (cursor parent [idx :damage :non-lethal])]))])
      [:div.clear]
 
      [:div.creature-controls
@@ -191,7 +201,8 @@
    (with-out-str (pprint/pprint v))])
 
 (defn encounter []
-  (let [{:keys [active-creature creatures round]} @current-encounter]
+  (let [{:keys [active-creature creatures round]} @current-encounter
+        started? (< 0 round)]
     [:div#encounter
      [:div.controls
       [:div.left
@@ -206,11 +217,12 @@
         (fn [idx c]
           ^{:key (:key c)} [creature c (cursor current-encounter [:creatures])
                             idx
+                            started?
                             (and
                               (= idx active-creature)
-                              (< 0 round))])
+                              started?)])
         creatures)]
-     (debug-out "state" @current-encounter)]))
+     #_(debug-out "state" @current-encounter)]))
 
 (defn sidebar []
   [:div#sidebar

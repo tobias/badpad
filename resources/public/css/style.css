@@ -53,6 +53,9 @@ div.creature {
     margin: 5px 5px 5px 25px;
 }
 
+div.hp {
+    margin-left: 5px;
+}
 div.hp.ouch {
     background-color: #c60;
     color: #fff;
