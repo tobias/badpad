@@ -27,7 +27,7 @@
     (str "+" v)
     (str v)))
 
-(defn parse-entry
+(defn parse-creature
   [e]
   (let [[_ name init-mod] (re-find #"([^|]+)\|?(.*)" e)]
     [name (if (empty? init-mod) 0 (js/parseInt init-mod))]))
@@ -43,7 +43,8 @@
     :hp hp
     :morale-threshold mc
     :damage {:lethal 0 :non-lethal 0}
-    :init-mod init-mod}))
+    :init-mod init-mod
+    :conditions []}))
 
 (reset! encounters
   [{:name "A1"
@@ -61,7 +62,7 @@
                         (when
                             (and (= 13 (.-which e))
                               (not (empty? @val)))
-                          (swap! creatures conj (apply new-creature pc? (parse-entry @val)))
+                          (swap! creatures conj (apply new-creature pc? (parse-creature @val)))
                           (reset! val nil)
                           (set! (.-value (.-target e)) "")))}]])))
 
@@ -94,37 +95,99 @@
        [:button
         {:on-click (fn [e]
                      (let [pos (.getBoundingClientRect (.-target e))]
-                               (swap! internal-state assoc
-                                 count-state {:visible? true
-                                              :position [(.-left pos)
-                                                         (.-top pos)]})))}
+                       (swap! internal-state assoc
+                         count-state {:visible? true
+                                      :position [(.-left pos)
+                                                 (.-top pos)]})))}
         "+"]
        [counter-pane count-state
         (assoc (select-keys (get @internal-state count-state)
                  #{:position :visible?})
           :close #(swap! internal-state update-in [count-state :visible?] not))]])))
 
-(defn swap-creatures
-  [a-idx b-idx]
-  (let [creatures (:creatures @current-encounter)]
-    (if (<= 0 b-idx (dec (count creatures)))
-      (let [creature-a (nth creatures a-idx)
-            creature-b (nth creatures b-idx)]
-        (swap! current-encounter update :creatures assoc
-          a-idx creature-b
-          b-idx creature-a)))))
+(defn plus-button
+  [v]
+  [:button
+   {:on-click (fn [] (swap! v #(inc (if (= "-" %) 0 %))))}
+   "+"])
 
-(defn remove-creature
+(def conditions
+  ["Conditions"
+   "Bleed"
+   "Blinded"
+   "Confused"
+   "Cowering"
+   "Dazed"
+   "Dazzled"
+   "Deafened"
+   "Disabled"
+   "Dying"
+   "Entangled"
+   "Exhausted"
+   "Fascinated"
+   "Fatigued"
+   "Flat-Footed"
+   "Frightened"
+   "Grappled"
+   "Helpless"
+   "Incorporeal"
+   "Invisible"
+   "Nauseated"
+   "Panicked"
+   "Paralyzed"
+   "Petrified"
+   "Pinned"
+   "Prone"
+   "Shaken"
+   "Sickened"
+   "Stable"
+   "Staggered"
+   "Stunned"
+   "Unconscious"])
+
+(defn remove-item
   [list idx]
   (swap! list #(vec
                  (concat (take idx %)
                    (drop (inc idx) %)))))
 
+(defn conditions-pane
+  [active-creature creature-conditions]
+  (let [option (fn [name]
+                 ^{:key name} [:option name])]
+    [:div.conditions
+     [:select
+      {:on-change #(let [value (-> % .-target .-value)]
+                     (when (not= (first conditions) value)
+                       (swap! creature-conditions conj {:name value
+                                                        :rounds "-"
+                                                        :on-active-creature active-creature})
+                       (set! (-> % .-target .-value) (first conditions))))}
+      (map option conditions)]
+     (map-indexed
+       (fn [idx {:keys [name rounds]}]
+         ^{:key name} [:div.condition
+                       [:span (str name " " rounds)]
+                       [plus-button (cursor creature-conditions [idx :rounds])]
+                       [:button {:on-click #(remove-item creature-conditions idx)} "x"]])
+       @creature-conditions)]))
+
+(defn swap-creatures
+  [creatures a-idx b-idx]
+  (if (<= 0 b-idx (dec (count @creatures)))
+    (let [creature-a (nth @creatures a-idx)
+          creature-b (nth @creatures b-idx)]
+      (swap! creatures assoc
+        a-idx creature-b
+        b-idx creature-a))))
+
 (defn creature
-  [{:keys [name damage hp init init-mod morale-threshold pc?] :as creature}
-   parent idx started? active?]
-  (let [{:keys [lethal non-lethal]} damage]
-    [:div.creature.flex {:class [(when active? "active")]}
+  [creature creatures idx started? active-creature]
+  (let [{:keys [name damage hp init init-mod morale-threshold pc?]} creature
+        {:keys [lethal non-lethal]} damage
+        active? (and (= idx active-creature)
+                  started?)]
+    [:div.creature {:class [(when active? "active")]}
      [:div.name.left
       [:span.bold name]
       [:span.init-mod (with-sign init-mod)]]
@@ -132,7 +195,7 @@
       [:span.init "Init:"
        [:span.bold init]]
       (when-not started?
-        [counter-button (cursor parent [idx :init])])]
+        [counter-button (cursor creatures [idx :init])])]
      (when-not pc?
        [:div.hp.flex.left
         {:class (cond
@@ -141,32 +204,32 @@
         [:span "HP:"
          [:span.bold hp]]
         (when-not started?
-          [counter-button (cursor parent [idx :hp])])
+          [counter-button (cursor creatures [idx :hp])])
         [:span "MC:"
          [:span.bold morale-threshold]]
         (when-not started?
-          [counter-button (cursor parent [idx :morale-threshold])])
+          [counter-button (cursor creatures [idx :morale-threshold])])
         (when started?
           (list
             [:span "L:"
              [:span.bold lethal]]
-            [counter-button (cursor parent [idx :damage :lethal])]
+            [counter-button (cursor creatures [idx :damage :lethal])]
             [:span "NL:"
              [:span.bold non-lethal]]
-            [counter-button (cursor parent [idx :damage :non-lethal])]))])
+            [counter-button (cursor creatures [idx :damage :non-lethal])]))])
      [:div.clear]
-
+     [conditions-pane active-creature (cursor creatures [idx :conditions])]
      [:div.creature-controls
-      [:button {:on-click #(swap-creatures idx (dec idx))} "↑"]
-      [:button {:on-click #(swap-creatures idx (inc idx))} "↓"]
-      [:button {:on-click #(remove-creature parent idx)} "x"]]]))
+      [:button {:on-click #(swap-creatures creatures idx (dec idx))} "↑"]
+      [:button {:on-click #(swap-creatures creatures idx (inc idx))} "↓"]
+      [:button {:on-click #(remove-item creatures idx)} "x"]]]))
 
 (defn pc
   [{:keys [name init-mod]} parent idx]
   [:div.pc
    [:span.bold name]
    [:span.init-mod (with-sign init-mod)]
-   [:button {:on-click #(remove-creature parent idx)} "x"]])
+   [:button {:on-click #(remove-item parent idx)} "x"]])
 
 (defn init-comparator
   [a b]
@@ -180,19 +243,51 @@
   [creatures]
   (vec (sort init-comparator creatures)))
 
-(defn next-creature []
+(defn count-down-conditions
+  [active-creature-idx conditions]
+  (reduce
+    (fn [acc {:keys [rounds on-active-creature] :as condition}]
+      (cond
+        (or
+          (not= active-creature-idx on-active-creature)
+          (= "-" rounds))
+        (conj acc condition)
+        
+        (= 1 rounds) acc
+        
+        :else (conj acc (update condition :rounds dec))))
+    []
+    conditions))
+
+(defn next-creature*
+  [next-creature-idx creatures]
+  {:active-creature next-creature-idx
+   :creatures (reduce
+                (fn [acc creature]
+                  (conj acc
+                    (update creature :conditions
+                      #(count-down-conditions next-creature-idx %))))
+                []
+                creatures)})
+
+(defn next-creature
+  []
   (let [{:keys [active-creature creatures round]} @current-encounter
-        next-creature (inc active-creature)
+        next-creature-idx (inc active-creature)
         next-round {:round (inc round)
-                    :active-creature 0}]
-    (swap! current-encounter merge (cond
-                                     (= 0 round)
-                                     (assoc next-round
-                                       :creatures (sort-by-init creatures))
+                    :active-creature 0}
+        next-state (cond
+                     (= 0 round)
+                     (assoc next-round
+                       :creatures (sort-by-init creatures))
 
-                                     (= next-creature (count creatures)) next-round
+                     (= next-creature-idx (count creatures))
+                     (merge
+                       (next-creature* 0 creatures)
+                       next-round)
 
-                                     :else {:active-creature next-creature}))))
+                     :else (next-creature* next-creature-idx creatures))]
+    (swap! current-encounter merge next-state)))
 
 (defn debug-out
   [n v]
@@ -217,12 +312,13 @@
      [:div
       (map-indexed
         (fn [idx c]
-          ^{:key (:key c)} [creature c (cursor current-encounter [:creatures])
-                            idx
-                            started?
-                            (and
-                              (= idx active-creature)
-                              started?)])
+          (let [creatures (cursor current-encounter [:creatures])]
+            ^{:key (:key c)} [creature
+                              c
+                              creatures
+                              idx
+                              started?
+                              active-creature]))
         creatures)]
      #_(debug-out "state" @current-encounter)]))
 
@@ -244,9 +340,8 @@
                       [:button.encounter
                        {:on-click #(reset! current-encounter
                                      (new-encounter-state (concat @party creatures)))}
-              name]])
-      @encounters)]
-   ])
+                       name]])
+      @encounters)]])
 
 (defn container []
   [:div.container
@@ -260,10 +355,5 @@
   (when-let [el (get-app-element)]
     (mount el)))
 
-;; conditionally start your application based on the presence of an "app" element
-;; this is particularly helpful for testing this ns without launching the app
-(mount-app-element)
-
-;; specify reload hook with ^;after-load metadata
 (defn ^:after-load on-reload []
   (mount-app-element))

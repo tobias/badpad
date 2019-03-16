@@ -10,7 +10,7 @@
     clear: both;
 }
 
-button {
+button, select {
     color: white;
     Background-color: #444;
 }
