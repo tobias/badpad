@@ -3,13 +3,14 @@
   - [X] Party entry
   - [X] Copy PCs to encounter
   - [X] scope state tp encounter
+  - [ ] allow uploading encounters
 * Adding creatures [1/1]
   - [X] text field w/init parsing
-* Adding conditions [3/4]
+* Adding conditions [4/4]
   - [X] conditions dropdown
   - [X] add rounds
   - [X] count down rounds
-  - [ ] use counter pane
+  - [X] use counter pane
 * Creature extras [7/7]
   - [X] lethal and non-lethal damge
   - [X] HP

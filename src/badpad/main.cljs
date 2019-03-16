@@ -74,46 +74,43 @@
   (let [internal-state (atom 0)
         button (fn [amount]
                  [:button {:on-click #(swap! internal-state + amount)} (with-sign amount)])]
-    (fn [parent-state {:keys [visible? position close]}]
+    (fn [amounts parent-state {:keys [visible? position close]}]
       (let [[left top] position
             close' (fn []
                      (reset! internal-state 0)
-                     (close))]
+                     (close))
+            value @parent-state
+            value (if (= "-" value) 0 value)]
         [:div.counter-pane {:class [(when (not visible?) "hidden")]
                             :style {:top (str top "px") :left (str left "px")}}
          [:button {:on-click close'} "x"]
-         [:span.bold (str (+ @parent-state @internal-state) " (" (with-sign @internal-state) ")")]
-         (button 10)
-         (button 5)
-         (button 1)
-         (button -1)
+         [:span.bold (str (+ value @internal-state) " (" (with-sign @internal-state) ")")]
+         (map button amounts)
          [:button {:on-click (fn []
-                               (swap! parent-state + @internal-state)
+                               (reset! parent-state (+ value @internal-state))
                                (close'))} "✓"]]))))
 
 (defn counter-button
-  []
-  (let [internal-state (atom {})]
-    (fn [count-state]
-      [:div.flex
-       [:button
-        {:on-click (fn [e]
-                     (let [pos (.getBoundingClientRect (.-target e))]
-                       (swap! internal-state assoc
-                         count-state {:visible? true
-                                      :position [(.-left pos)
-                                                 (.-top pos)]})))}
-        "+"]
-       [counter-pane count-state
-        (assoc (select-keys (get @internal-state count-state)
-                 #{:position :visible?})
-          :close #(swap! internal-state update-in [count-state :visible?] not))]])))
+  [amounts]
+  (fn []
+    (let [internal-state (atom {})]
+      (fn [count-state]
+        [:span
+         [:button
+          {:on-click (fn [e]
+                       (let [pos (.getBoundingClientRect (.-target e))]
+                         (swap! internal-state assoc
+                           count-state {:visible? true
+                                        :position [(.-left pos)
+                                                   (.-top pos)]})))}
+          "+"]
+         [counter-pane amounts count-state
+          (assoc (select-keys (get @internal-state count-state)
+                   #{:position :visible?})
+            :close #(swap! internal-state update-in [count-state :visible?] not))]]))))
 
-(defn plus-button
-  [v]
-  [:button
-   {:on-click (fn [] (swap! v #(inc (if (= "-" %) 0 %))))}
-   "+"])
+(def big-counter-button (partial counter-button [10 5 1 -1]))
+(def small-counter-button (partial counter-button [5 3 1 -1]))
 
 (def conditions
   ["Conditions"
@@ -172,8 +169,8 @@
       (map-indexed
         (fn [idx {:keys [name rounds]}]
           ^{:key name} [:span.condition
-                        [:span (str name " " rounds)]
-                        [plus-button (cursor creature-conditions [idx :rounds])]
+                        [:span name [:span.italic rounds]]
+                        [small-counter-button (cursor creature-conditions [idx :rounds])]
                         [:button {:on-click #(remove-item creature-conditions idx)} "x"]])
         @creature-conditions)]]))
 
@@ -219,7 +216,7 @@
       [:span.init "Init:"
        [:span.bold init]]
       (when-not started?
-        [counter-button (cursor creatures [idx :init])])]
+        [big-counter-button (cursor creatures [idx :init])])]
      (when-not pc?
        [:div.hp.flex.left
         [:span {:class (cond
@@ -227,19 +224,19 @@
                          (>= lethal (- hp morale-threshold)) "flee")}
          "HP:" [:span.bold hp]]
         (when-not started?
-          [counter-button (cursor creatures [idx :hp])])
+          [big-counter-button (cursor creatures [idx :hp])])
         [:span "MC:"
          [:span.bold morale-threshold]]
         (when-not started?
-          [counter-button (cursor creatures [idx :morale-threshold])])
+          [big-counter-button (cursor creatures [idx :morale-threshold])])
         (when started?
           (list
             [:span "L:"
              [:span.bold lethal]]
-            [counter-button (cursor creatures [idx :damage :lethal])]
+            [big-counter-button (cursor creatures [idx :damage :lethal])]
             [:span "NL:"
              [:span.bold non-lethal]]
-            [counter-button (cursor creatures [idx :damage :non-lethal])]))])
+            [big-counter-button (cursor creatures [idx :damage :non-lethal])]))])
      [:div.clear]
      [ready-delay-pane (cursor creatures [idx])]
      [conditions-pane active-creature (cursor creatures [idx :conditions])]
