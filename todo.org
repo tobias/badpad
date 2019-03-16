@@ -5,17 +5,18 @@
   - [X] scope state tp encounter
 * Adding creatures [1/1]
   - [X] text field w/init parsing
-* Adding conditions [3/3]
+* Adding conditions [3/4]
   - [X] conditions dropdown
   - [X] add rounds
   - [X] count down rounds
-* Creature extras [6/7]
+  - [ ] use counter pane
+* Creature extras [7/7]
   - [X] lethal and non-lethal damge
   - [X] HP
   - [X] Reorder
   - [X] Sort by init
   - [X] Highlight when dmg > HP
-  - [ ] Delay/ready
+  - [X] Delay/ready
   - [X] Morale condition
 * Misc [3/3]
   - [X] Use vector instead of map for creatures

@@ -10,6 +10,10 @@
     clear: both;
 }
 
+.italic {
+    font-style: italic;
+}
+
 button, select {
     color: black;
     background-color: white;
@@ -113,6 +117,10 @@ div.active {
     right: 25px;
 }
 
+div.held {
+    right: 25px;
+}
+
 div.creature span {
     margin-left: 3px;
 }
@@ -121,6 +129,14 @@ div.creature span {
     position: absolute;
     top: 5px;
     right: 5px;
+}
+
+.ready-delay {
+    display: inline;
+}
+
+.conditions {
+    display: inline;
 }
 
 .condition {

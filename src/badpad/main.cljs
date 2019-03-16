@@ -171,30 +171,49 @@
      [:div.active-conditions
       (map-indexed
         (fn [idx {:keys [name rounds]}]
-          ^{:key name} [:span.condition 
+          ^{:key name} [:span.condition
                         [:span (str name " " rounds)]
                         [plus-button (cursor creature-conditions [idx :rounds])]
                         [:button {:on-click #(remove-item creature-conditions idx)} "x"]])
         @creature-conditions)]]))
 
-(defn swap-creatures
+(defn ready-delay-pane
+  [creature]
+  [:div.ready-delay
+   [:span.bold
+    (cond
+      (:readied? @creature) "Readied"
+      (:delayed? @creature) "Delayed"
+      :else (list
+              [:button {:on-click #(swap! creature assoc :readied? true)} "ready"]
+              [:button {:on-click #(swap! creature assoc :delayed? true)} "delay"]))]])
+
+(defn clear-ready-delay
+  [creature]
+  (assoc creature
+    :readied? false
+    :delayed? false))
+
+(defn move-creature
   [creatures a-idx b-idx]
   (if (<= 0 b-idx (dec (count @creatures)))
     (let [creature-a (nth @creatures a-idx)
           creature-b (nth @creatures b-idx)]
       (swap! creatures assoc
         a-idx creature-b
-        b-idx creature-a))))
+        b-idx (clear-ready-delay creature-a)))))
 
 (defn creature
   [creature creatures idx started? active-creature]
-  (let [{:keys [name damage hp init init-mod morale-threshold pc?]} creature
+  (let [{:keys [name damage hp init init-mod morale-threshold pc?
+                readied? delayed?]} creature
         {:keys [lethal non-lethal]} damage
         active? (and (= idx active-creature)
                   started?)]
-    [:div.creature {:class [(when active? "active")]}
+    [:div.creature {:class [(when active? "active")
+                            (when (or readied? delayed?) "held")]}
      [:div.name.left
-      [:span.bold name]
+      [:span.bold.italic name]
       [:span.init-mod (with-sign init-mod)]]
      [:div.flex.left
       [:span.init "Init:"
@@ -204,8 +223,8 @@
      (when-not pc?
        [:div.hp.flex.left
         [:span {:class (cond
-                  (>= (+ lethal non-lethal) hp)       "ouch"
-                  (>= lethal (- hp morale-threshold)) "flee")}
+                         (>= (+ lethal non-lethal) hp)       "ouch"
+                         (>= lethal (- hp morale-threshold)) "flee")}
          "HP:" [:span.bold hp]]
         (when-not started?
           [counter-button (cursor creatures [idx :hp])])
@@ -222,13 +241,14 @@
              [:span.bold non-lethal]]
             [counter-button (cursor creatures [idx :damage :non-lethal])]))])
      [:div.clear]
+     [ready-delay-pane (cursor creatures [idx])]
      [conditions-pane active-creature (cursor creatures [idx :conditions])]
      [:div.creature-controls
       [:div.right
        [:button {:on-click #(remove-item creatures idx)} "x"]]
       [:div
-       [:button {:on-click #(swap-creatures creatures idx (dec idx))} "↑"]
-       [:button {:on-click #(swap-creatures creatures idx (inc idx))} "↓"]]]]))
+       [:button {:on-click #(move-creature creatures idx (dec idx))} "↑"]
+       [:button {:on-click #(move-creature creatures idx (inc idx))} "↓"]]]]))
 
 (defn pc
   [{:keys [name init-mod]} parent idx]
@@ -268,13 +288,14 @@
 (defn next-creature*
   [next-creature-idx creatures]
   {:active-creature next-creature-idx
-   :creatures (reduce
-                (fn [acc creature]
-                  (conj acc
-                    (update creature :conditions
-                      #(count-down-conditions next-creature-idx %))))
-                []
-                creatures)})
+   :creatures (->> creatures
+                (map-indexed
+                  (fn [idx creature]
+                    (cond-> creature
+                      true (update :conditions
+                             #(count-down-conditions next-creature-idx %))
+                      (= idx next-creature-idx) clear-ready-delay)))
+                vec)})
 
 (defn next-creature
   []
@@ -307,7 +328,7 @@
     [:div#encounter
      [:div.controls
       [:div.left
-       [:div.round.left 
+       [:div.round.left
         [:span.bold "Round " round]
         [:span.next-round
          [:button {:on-click next-creature}
