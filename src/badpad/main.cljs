@@ -48,7 +48,11 @@
 
 (reset! encounters
   [{:name "A1"
-    :creatures [(new-creature false "goblin" 4 15 20 10)]}])
+    :creatures [(new-creature false "goblin" 4 15 20 10)
+                (new-creature false "Dingus" 5 17 25 0)]}
+   {:name "A2"
+    :creatures [(new-creature false "gerblin" 4 15 20 10)
+                (new-creature false "Fingus" 5 17 25 0)]}])
 
 (defn add-creature []
   (let [val (atom nil)]
@@ -164,13 +168,14 @@
                                                         :on-active-creature active-creature})
                        (set! (-> % .-target .-value) (first conditions))))}
       (map option conditions)]
-     (map-indexed
-       (fn [idx {:keys [name rounds]}]
-         ^{:key name} [:div.condition
-                       [:span (str name " " rounds)]
-                       [plus-button (cursor creature-conditions [idx :rounds])]
-                       [:button {:on-click #(remove-item creature-conditions idx)} "x"]])
-       @creature-conditions)]))
+     [:div.active-conditions
+      (map-indexed
+        (fn [idx {:keys [name rounds]}]
+          ^{:key name} [:span.condition 
+                        [:span (str name " " rounds)]
+                        [plus-button (cursor creature-conditions [idx :rounds])]
+                        [:button {:on-click #(remove-item creature-conditions idx)} "x"]])
+        @creature-conditions)]]))
 
 (defn swap-creatures
   [creatures a-idx b-idx]
@@ -198,11 +203,10 @@
         [counter-button (cursor creatures [idx :init])])]
      (when-not pc?
        [:div.hp.flex.left
-        {:class (cond
+        [:span {:class (cond
                   (>= (+ lethal non-lethal) hp)       "ouch"
                   (>= lethal (- hp morale-threshold)) "flee")}
-        [:span "HP:"
-         [:span.bold hp]]
+         "HP:" [:span.bold hp]]
         (when-not started?
           [counter-button (cursor creatures [idx :hp])])
         [:span "MC:"
@@ -220,9 +224,11 @@
      [:div.clear]
      [conditions-pane active-creature (cursor creatures [idx :conditions])]
      [:div.creature-controls
-      [:button {:on-click #(swap-creatures creatures idx (dec idx))} "↑"]
-      [:button {:on-click #(swap-creatures creatures idx (inc idx))} "↓"]
-      [:button {:on-click #(remove-item creatures idx)} "x"]]]))
+      [:div.right
+       [:button {:on-click #(remove-item creatures idx)} "x"]]
+      [:div
+       [:button {:on-click #(swap-creatures creatures idx (dec idx))} "↑"]
+       [:button {:on-click #(swap-creatures creatures idx (inc idx))} "↓"]]]]))
 
 (defn pc
   [{:keys [name init-mod]} parent idx]
@@ -252,9 +258,9 @@
           (not= active-creature-idx on-active-creature)
           (= "-" rounds))
         (conj acc condition)
-        
+
         (= 1 rounds) acc
-        
+
         :else (conj acc (update condition :rounds dec))))
     []
     conditions))
@@ -301,11 +307,16 @@
     [:div#encounter
      [:div.controls
       [:div.left
-       [:span.round "Round:"
-        [:span.bold round]]
-       [:button.next {:on-click next-creature} ">>"]
-       [:button.undo {:on-click hist/undo!} "undo"]
-       [:button.redo {:on-click hist/redo!} "redo"]]
+       [:div.round.left 
+        [:span.bold "Round " round]
+        [:span.next-round
+         [:button {:on-click next-creature}
+          (if (= 0 round)
+            "start"
+            "next creature >>")]]]
+       [:span.undo-redo
+        [:button.undo {:on-click hist/undo!} "undo"]
+        [:button.redo {:on-click hist/redo!} "redo"]]]
       [:div.right
        [add-creature (cursor current-encounter [:creatures]) false]]
       [:div.clear]]
@@ -354,6 +365,8 @@
 (defn mount-app-element []
   (when-let [el (get-app-element)]
     (mount el)))
+
+(mount-app-element)
 
 (defn ^:after-load on-reload []
   (mount-app-element))

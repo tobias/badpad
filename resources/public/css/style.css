@@ -11,8 +11,13 @@
 }
 
 button, select {
-    color: white;
-    Background-color: #444;
+    color: black;
+    background-color: white;
+    border-radius: 3px;
+}
+
+body {
+    Background-color: teal;
 }
 
 .flex {
@@ -32,6 +37,10 @@ div.container {
     margin-bottom: 8px;
 }
 
+#sidebar .section > div {
+    margin-top: 5px;
+}
+
 #sidebar .header {
     font-weight: bold;
 }
@@ -42,6 +51,26 @@ div.container {
 
 #encounter {
     width: 100%;
+}
+
+.round {
+    padding: 3px;
+    border-radius: 5px;
+    background-color: #f93;
+}
+
+.next-round {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.undo-redo {
+    display: inline-block;
+    margin-left: 20px;
+}
+
+button.undo {
+    margin-right: 10px;
 }
 
 div.pc {
@@ -55,18 +84,24 @@ div.creature {
     background-color: #ccc;
     padding: 5px;
     margin: 5px 5px 5px 25px;
+    border-radius: 5px;
 }
 
-div.hp {
-    margin-left: 5px;
+div.creature span {
+    padding: 3px;
 }
-div.hp.ouch {
+
+.ouch {
     background-color: #c60;
     color: #fff;
+    border-radius: 3px;
+    padding: 3px;
 }
 
-div.hp.flee {
+.flee {
     background-color: yellow;
+    border-radius: 3px;
+    padding: 3px;
 }
 
 div.name {
@@ -74,12 +109,8 @@ div.name {
 }
 
 div.active {
-    background-color: #0f0;
-    margin-left: 5px;
-}
-
-div.creature > * {
-    //margin: auto;
+    background-color: #fc9; 
+    right: 25px;
 }
 
 div.creature span {
@@ -88,8 +119,20 @@ div.creature span {
 
 .creature-controls {
     position: absolute;
-    top: 1px;
-    right: 1px;
+    top: 5px;
+    right: 5px;
+}
+
+.condition {
+    display: inline-block;
+    padding: 3px;
+    margin: 3px;
+    border-radius: 5px;
+    background-color: #ddd;
+}
+
+.active-conditions {
+    padding-top: 5px;
 }
 
 .bold {
@@ -100,6 +143,8 @@ div.counter-pane {
     position: fixed;
     background-color: #0cc;
     border: 2px solid black;
+    border-radius: 3px;
+    padding: 1px;
     z-index: 100;
 }
 
