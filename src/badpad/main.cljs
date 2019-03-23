@@ -74,6 +74,72 @@
                           (reset! val nil)
                           (set! (.-value (.-target e)) "")))}]])))
 
+
+(defn init-comparator
+  [a b]
+  (let [init-a (:init a)
+        init-b (:init b)]
+    (if (= init-a init-b)
+      (- (:init-mod b) (:init-mod a))
+      (- init-b init-a))))
+
+(defn sort-by-init
+  [creatures]
+  (vec (sort init-comparator creatures)))
+
+(defn count-down-conditions
+  [active-creature-idx conditions]
+  (reduce
+    (fn [acc {:keys [rounds on-active-creature] :as condition}]
+      (cond
+        (or
+          (not= active-creature-idx on-active-creature)
+          (= "-" rounds))
+        (conj acc condition)
+
+        (= 1 rounds) acc
+
+        :else (conj acc (update condition :rounds dec))))
+    []
+    conditions))
+
+(defn clear-ready-delay
+  [creature]
+  (assoc creature
+    :readied? false
+    :delayed? false))
+
+(defn next-creature*
+  [next-creature-idx creatures]
+  {:active-creature next-creature-idx
+   :creatures (->> creatures
+                (map-indexed
+                  (fn [idx creature]
+                    (cond-> creature
+                      true (update :conditions
+                             #(count-down-conditions next-creature-idx %))
+                      (= idx next-creature-idx) clear-ready-delay)))
+                vec)})
+
+(defn next-creature
+  []
+  (let [{:keys [active-creature creatures round]} @current-encounter
+        next-creature-idx (inc active-creature)
+        next-round {:round (inc round)
+                    :active-creature 0}
+        next-state (cond
+                     (= 0 round)
+                     (assoc next-round
+                       :creatures (sort-by-init creatures))
+
+                     (= next-creature-idx (count creatures))
+                     (merge
+                       (next-creature* 0 creatures)
+                       next-round)
+
+                     :else (next-creature* next-creature-idx creatures))]
+    (swap! current-encounter merge next-state)))
+
 (defn counter-pane []
   (let [internal-state (atom 0)
         button (fn [amount]
@@ -186,14 +252,14 @@
       (:readied? @creature) "Readied"
       (:delayed? @creature) "Delayed"
       :else (list
-              [:button {:on-click #(swap! creature assoc :readied? true)} "ready"]
-              [:button {:on-click #(swap! creature assoc :delayed? true)} "delay"]))]])
-
-(defn clear-ready-delay
-  [creature]
-  (assoc creature
-    :readied? false
-    :delayed? false))
+              [:button {:on-click #(do
+                                     (swap! creature assoc :readied? true)
+                                     (next-creature))}
+               "ready"]
+              [:button {:on-click #(do
+                                     (swap! creature assoc :delayed? true)
+                                     (next-creature))}
+               "delay"]))]])
 
 (defn move-creature
   [creatures a-idx b-idx]
@@ -257,65 +323,6 @@
    [:span.bold name]
    [:span.init-mod (with-sign init-mod)]
    [:button {:on-click #(remove-item parent idx)} "x"]])
-
-(defn init-comparator
-  [a b]
-  (let [init-a (:init a)
-        init-b (:init b)]
-    (if (= init-a init-b)
-      (- (:init-mod b) (:init-mod a))
-      (- init-b init-a))))
-
-(defn sort-by-init
-  [creatures]
-  (vec (sort init-comparator creatures)))
-
-(defn count-down-conditions
-  [active-creature-idx conditions]
-  (reduce
-    (fn [acc {:keys [rounds on-active-creature] :as condition}]
-      (cond
-        (or
-          (not= active-creature-idx on-active-creature)
-          (= "-" rounds))
-        (conj acc condition)
-
-        (= 1 rounds) acc
-
-        :else (conj acc (update condition :rounds dec))))
-    []
-    conditions))
-
-(defn next-creature*
-  [next-creature-idx creatures]
-  {:active-creature next-creature-idx
-   :creatures (->> creatures
-                (map-indexed
-                  (fn [idx creature]
-                    (cond-> creature
-                      true (update :conditions
-                             #(count-down-conditions next-creature-idx %))
-                      (= idx next-creature-idx) clear-ready-delay)))
-                vec)})
-
-(defn next-creature
-  []
-  (let [{:keys [active-creature creatures round]} @current-encounter
-        next-creature-idx (inc active-creature)
-        next-round {:round (inc round)
-                    :active-creature 0}
-        next-state (cond
-                     (= 0 round)
-                     (assoc next-round
-                       :creatures (sort-by-init creatures))
-
-                     (= next-creature-idx (count creatures))
-                     (merge
-                       (next-creature* 0 creatures)
-                       next-round)
-
-                     :else (next-creature* next-creature-idx creatures))]
-    (swap! current-encounter merge next-state)))
 
 (defn debug-out
   [n v]

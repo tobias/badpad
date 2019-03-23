@@ -11,7 +11,7 @@
   - [X] add rounds
   - [X] count down rounds
   - [X] use counter pane
-* Creature extras [7/7]
+* Creature extras [8/8]
   - [X] lethal and non-lethal damge
   - [X] HP
   - [X] Reorder
@@ -19,7 +19,7 @@
   - [X] Highlight when dmg > HP
   - [X] Delay/ready
   - [X] Morale condition
-  - [ ] Advance creature when ready/delay
+  - [X] Advance creature when ready/delay
 * Misc [3/3]
   - [X] Use vector instead of map for creatures
   - [X] Removal
