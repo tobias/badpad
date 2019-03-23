@@ -1,9 +1,9 @@
-* Encounter management [4/4]
+* Encounter management [5/5]
   - [X] encounter menu
   - [X] Party entry
   - [X] Copy PCs to encounter
   - [X] scope state tp encounter
-  - [ ] allow uploading encounters
+  - [X] allow uploading encounters
 * Adding creatures [1/1]
   - [X] text field w/init parsing
 * Adding conditions [4/4]
@@ -19,6 +19,7 @@
   - [X] Highlight when dmg > HP
   - [X] Delay/ready
   - [X] Morale condition
+  - [ ] Advance creature when ready/delay
 * Misc [3/3]
   - [X] Use vector instead of map for creatures
   - [X] Removal

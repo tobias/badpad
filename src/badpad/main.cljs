@@ -1,6 +1,7 @@
 (ns ^:figwheel-hooks badpad.main
   (:require
    [clojure.pprint :as pprint]
+   [cljs.reader :as reader]
    [goog.dom :as gdom]
    [historian.core :as hist]
    [reagent.core :as reagent :refer [atom cursor]]))
@@ -32,27 +33,30 @@
   (let [[_ name init-mod] (re-find #"([^|]+)\|?(.*)" e)]
     [name (if (empty? init-mod) 0 (js/parseInt init-mod))]))
 
+(defn ensure-value
+  [m v keys]
+  (reduce
+    (fn [acc k]
+      (if (k acc)
+        acc
+        (assoc acc k v)))
+    m
+    keys))
+
 (defn new-creature
   ([pc? name init-mod]
-   (new-creature pc? name init-mod 10 10 0))
-  ([pc? name init-mod init hp mc]
-   {:name name
-    :key (random-uuid)
-    :pc? pc?
-    :init init
-    :hp hp
-    :morale-threshold mc
-    :damage {:lethal 0 :non-lethal 0}
-    :init-mod init-mod
-    :conditions []}))
-
-(reset! encounters
-  [{:name "A1"
-    :creatures [(new-creature false "goblin" 4 15 20 10)
-                (new-creature false "Dingus" 5 17 25 0)]}
-   {:name "A2"
-    :creatures [(new-creature false "gerblin" 4 15 20 10)
-                (new-creature false "Fingus" 5 17 25 0)]}])
+   (new-creature {:pc?      pc?
+                  :name     name
+                  :init-mod init-mod
+                  :init     10
+                  :hp       10}))
+  ([creature]
+   (-> creature
+     (assoc
+       :key        (random-uuid)
+       :damage     {:lethal 0 :non-lethal 0}
+       :conditions [])
+     (ensure-value 0 #{:init :init-mod :hp :morale-threshold}))))
 
 (defn add-creature []
   (let [val (atom nil)]
@@ -349,7 +353,25 @@
                               started?
                               active-creature]))
         creatures)]
-     #_(debug-out "state" @current-encounter)]))
+     (debug-out "state" @current-encounter)]))
+
+(defn read-creatures
+  [creatures]
+  (vec
+    (map new-creature creatures)))
+
+(defn read-encounters
+  [s]
+  (reset! encounters
+    (->> (reader/read-string s)
+      (map #(update % :creatures read-creatures))
+      vec)))
+
+(defn load-encounters
+  [f]
+  (let [reader (js/FileReader.)]
+    (set! (.-onload reader) #(read-encounters (.-result (.-target %))))
+    (.readAsText reader f)))
 
 (defn sidebar []
   [:div#sidebar
@@ -363,14 +385,18 @@
     ]
    [:div.section
     [:span.header "Encounters"]
-    (map
-      (fn [{:keys [name creatures]}]
-        ^{:key name} [:div.encounter
-                      [:button.encounter
-                       {:on-click #(reset! current-encounter
-                                     (new-encounter-state (concat @party creatures)))}
-                       name]])
-      @encounters)]])
+    (if (seq @encounters)
+      (map
+        (fn [{:keys [name creatures]}]
+          ^{:key name} [:div.encounter
+                        [:button.encounter
+                         {:on-click #(reset! current-encounter
+                                       (new-encounter-state (concat @party creatures)))}
+                         name]])
+        @encounters)
+      [:input {:type "file"
+               :accept ".edn"
+               :on-change #(load-encounters (-> % .-target .-files (.item 0)))}])]])
 
 (defn container []
   [:div.container

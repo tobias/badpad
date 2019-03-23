@@ -1,0 +1,20 @@
+[{:name      "A1"
+  :creatures [{:name             "Bugbear 1"
+               :init-mod         4
+               :init             15
+               :hp               20
+               :morale-threshold 10}
+              {:name             "Bugbear 2"
+               :init-mod         4
+               :init             18
+               :hp               20
+               :morale-threshold 10}]}
+ {:name      "A2"
+  :creatures [{:name     "Lich"
+               :init-mod 2
+               :init     9
+               :hp       111}
+              {:name     "Stone Golem"
+               :init-mod -1
+               :init     19
+               :hp       107}]}]
