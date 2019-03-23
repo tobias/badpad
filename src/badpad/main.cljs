@@ -360,7 +360,7 @@
                               started?
                               active-creature]))
         creatures)]
-     (debug-out "state" @current-encounter)]))
+     #_(debug-out "state" @current-encounter)]))
 
 (defn read-creatures
   [creatures]
