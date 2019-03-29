@@ -1,6 +1,6 @@
 # badpad
 
-FIXME: Write a one-line description of your library/project.
+A combat/initiative tracker for Pathfinder v1.
 
 ## Overview
 
