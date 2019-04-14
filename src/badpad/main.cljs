@@ -121,6 +121,10 @@
                       (= idx next-creature-idx) clear-ready-delay)))
                 vec)})
 
+(defn combat-started?
+  [{:keys [round]}]
+  (> round 0))
+
 (defn next-creature
   []
   (let [{:keys [active-creature creatures round]} @current-encounter
@@ -128,7 +132,7 @@
         next-round {:round (inc round)
                     :active-creature 0}
         next-state (cond
-                     (= 0 round)
+                     (not (combat-started? @current-encounter))
                      (assoc next-round
                        :creatures (sort-by-init creatures))
 
@@ -270,14 +274,19 @@
         a-idx creature-b
         b-idx (clear-ready-delay creature-a)))))
 
+(defn disable-creature
+  [creatures idx]
+  (swap! creatures assoc-in [idx :disabled?] true))
+
 (defn creature
   [creature creatures idx started? active-creature]
-  (let [{:keys [name damage hp init init-mod morale-threshold pc?
-                readied? delayed?]} creature
+  (let [{:keys [name damage disabled? hp init init-mod morale-threshold
+                pc? readied? delayed?]} creature
         {:keys [lethal non-lethal]} damage
         active? (and (= idx active-creature)
                   started?)]
     [:div.creature {:class [(when active? "active")
+                            (when disabled? "disabled")
                             (when (or readied? delayed?) "held")]}
      [:div.name.left
       [:span.bold.italic name]
@@ -312,7 +321,10 @@
      [conditions-pane active-creature (cursor creatures [idx :conditions])]
      [:div.creature-controls
       [:div.right
-       [:button {:on-click #(remove-item creatures idx)} "x"]]
+       [:button {:on-click #(if started?
+                              (disable-creature creatures idx)
+                              (remove-item creatures idx))}
+        "x"]]
       [:div
        [:button {:on-click #(move-creature creatures idx (dec idx))} "↑"]
        [:button {:on-click #(move-creature creatures idx (inc idx))} "↓"]]]]))
@@ -332,7 +344,7 @@
 
 (defn encounter []
   (let [{:keys [active-creature creatures round]} @current-encounter
-        started? (< 0 round)]
+        started? (combat-started? @current-encounter)]
     [:div#encounter
      [:div.controls
       [:div.left

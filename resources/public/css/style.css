@@ -117,6 +117,11 @@ div.active {
     right: 25px;
 }
 
+div.disabled .name {
+    text-decoration: line-through grey double;
+    color: grey;
+}
+
 div.held {
     right: 25px;
 }
