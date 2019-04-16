@@ -113,7 +113,7 @@ div.name {
 }
 
 div.active {
-    background-color: #fc9; 
+    background-color: cyan;
     right: 20px;
 }
 
@@ -149,7 +149,8 @@ div.creature span {
     padding: 3px;
     margin: 3px;
     border-radius: 5px;
-    background-color: #ddd;
+    background-color: #f93;
+    font-weight: bold;
 }
 
 .active-conditions {
