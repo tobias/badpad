@@ -1,7 +1,8 @@
 (ns ^:figwheel-hooks badpad.main
   (:require
-   [clojure.pprint :as pprint]
+   [cemerick.url :as url]
    [cljs.reader :as reader]
+   [clojure.pprint :as pprint]
    [goog.dom :as gdom]
    [historian.core :as hist]
    [reagent.core :as reagent :refer [atom cursor]]))
@@ -12,13 +13,32 @@
    :round 0
    :creatures (vec creatures)})
 
+(defn put-local-storage
+  [key value]
+  (.setItem (.-localStorage (gdom/getWindow))
+            (str key)
+            (prn-str value)))
+
+(defn get-local-storage
+  [key]
+  (.getItem (.-localStorage (gdom/getWindow))
+            (str key)))
+
 (defonce current-encounter (atom (new-encounter-state [])))
 
 (hist/record! current-encounter :current-encounter)
 
+(add-watch current-encounter :local-storage
+           #(put-local-storage :current-encounter %4))
+
 (defonce encounters (atom []))
 
 (defonce party (atom []))
+
+(defn load-encounter-from-localstorage
+  []
+  (when-let [v (get-local-storage :current-encounter)]
+    (reset! current-encounter (reader/read-string v))))
 
 (defn get-app-element []
   (gdom/getElement "app"))
@@ -117,8 +137,9 @@
                   (fn [idx creature]
                     (cond-> creature
                       true (update :conditions
-                             #(count-down-conditions next-creature-idx %))
-                      (= idx next-creature-idx) clear-ready-delay)))
+                                   #(count-down-conditions next-creature-idx %))
+                      (= idx next-creature-idx) clear-ready-delay
+                      true (assoc :acted? true))))
                 vec)})
 
 (defn combat-started?
@@ -278,19 +299,30 @@
   [creatures idx]
   (swap! creatures assoc-in [idx :disabled?] true))
 
+(defn toggle-show-to-players
+  [creatures idx]
+  (swap! creatures update-in [idx :show-to-players?] not))
+
 (defn creature
   [creature creatures idx started? active-creature]
   (let [{:keys [name damage disabled? hp init init-mod morale-threshold
-                pc? readied? delayed?]} creature
+                acted? pc? readied? delayed? show-to-players?]} creature
         {:keys [lethal non-lethal]} damage
         active? (and (= idx active-creature)
                   started?)]
     [:div.creature {:class [(when active? "active")
                             (when disabled? "disabled")
-                            (when (or readied? delayed?) "held")]}
+                            (when (or readied? delayed?) "held")
+                            (when-not show-to-players? "hide-from-players")
+                            (when-not pc? "monster")
+                            (when-not acted? "not-acted")]}
      [:div.name.left
       [:span.bold.italic name]
-      [:span.init-mod (with-sign init-mod)]]
+      [:span.init-mod (with-sign init-mod)]
+      (when-not pc?
+        [:button.show-hide {:on-click #(toggle-show-to-players creatures idx)}
+         ;; this is EYE in unicode, but emacs can't display it
+         "👁 "])]
      [:div.flex.left
       [:span.init "Init:"
        [:span.bold init]]
@@ -415,15 +447,42 @@
         @encounters)
       [:input {:type "file"
                :accept ".edn"
-               :on-change #(load-encounters (-> % .-target .-files (.item 0)))}])]])
+               :on-change #(load-encounters (-> % .-target .-files (.item 0)))}])
+    [:div
+     [:a {:href "?player-view=1" :target "blank"}
+      "Open player view"]]]])
 
 (defn container []
   [:div.container
    [sidebar]
    [encounter]])
 
+(defn player-view-container []
+  [:div.container.player-view
+   [encounter]])
+
+(defn player-view?
+  []
+  (-> (gdom/getWindow)
+      .-location
+      .-href
+      url/url
+      :query
+      (get "player-view")
+      boolean))
+
+(defn start-player-view-encounter-loader
+  []
+  (.setInterval (gdom/getWindow)
+                load-encounter-from-localstorage
+                500))
+
 (defn mount [el]
-  (reagent/render-component [container] el))
+  (when (player-view?)
+    (start-player-view-encounter-loader))
+  (reagent/render-component [(if (player-view?)
+                               player-view-container
+                               container)] el))
 
 (defn mount-app-element []
   (when-let [el (get-app-element)]

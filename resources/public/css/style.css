@@ -22,6 +22,7 @@ button, select {
 
 body {
     Background-color: teal;
+    font-family: sans-serif;
 }
 
 .flex {
@@ -30,7 +31,6 @@ body {
 
 div.container {
     display: flex;
-    font-family: sans-serif;
 }
 
 #sidebar {
@@ -89,6 +89,7 @@ div.creature {
     padding: 5px;
     margin: 5px 5px 5px 25px;
     border-radius: 5px;
+    min-height: 22px;
 }
 
 div.creature span {
@@ -174,3 +175,22 @@ div.counter-pane {
     display: none;
 } 
 
+.creature.hide-from-players .show-hide {
+    text-decoration: line-through black double;
+}
+
+.player-view .round,
+.player-view .controls,
+.player-view .monster.hide-from-players,
+.player-view .monster .name,
+.player-view .creature .init-mod,
+.player-view .creature .init,
+.player-view .creature button,
+.player-view .creature-controls,
+.player-view .hp,
+.player-view .ready-delay,
+.player-view .conditions select,
+.player-view .active-conditions .italic
+{
+    display: none;
+}
