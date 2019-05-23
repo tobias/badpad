@@ -118,9 +118,14 @@ div.active {
     right: 20px;
 }
 
-div.disabled .name {
-    text-decoration: line-through grey double;
-    color: grey;
+div.disabled {
+    background: repeating-linear-gradient(
+  45deg,
+  #bbb,
+  #bbb 10px,
+  #ccc 10px,
+  #ccc 20px
+);
 }
 
 div.held {
