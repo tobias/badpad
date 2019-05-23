@@ -179,8 +179,9 @@ div.counter-pane {
     text-decoration: line-through black double;
 }
 
-.player-view .round,
-.player-view .controls,
+.player-view .round .next-round,
+.player-view .controls .undo-redo,
+.player-view .controls .add-creature,
 .player-view .monster.hide-from-players,
 .player-view .monster .name,
 .player-view .creature .init-mod,
@@ -193,4 +194,8 @@ div.counter-pane {
 .player-view .active-conditions .italic
 {
     display: none;
+}
+
+.player-view {
+    font-size: 2em;
 }

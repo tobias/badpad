@@ -390,7 +390,7 @@
        [:span.undo-redo
         [:button.undo {:on-click hist/undo!} "undo"]
         [:button.redo {:on-click hist/redo!} "redo"]]]
-      [:div.right
+      [:div.right.add-creature
        [add-creature (cursor current-encounter [:creatures]) false]]
       [:div.clear]]
      [:div
