@@ -87,7 +87,7 @@ div.creature {
     position: relative;
     background-color: #ccc;
     padding: 5px;
-    margin: 5px 5px 5px 25px;
+    margin: 5px 0px 5px 0px;
     border-radius: 5px;
     min-height: 22px;
 }
@@ -115,7 +115,6 @@ div.name {
 
 div.active {
     background-color: cyan;
-    right: 20px;
 }
 
 div.disabled {
@@ -129,7 +128,6 @@ div.disabled {
 }
 
 div.held {
-    right: 10px;
 }
 
 div.creature span {

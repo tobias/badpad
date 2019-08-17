@@ -395,17 +395,21 @@
       [:div.right.add-creature
        [add-creature (cursor current-encounter [:creatures]) false]]
       [:div.clear]]
-     [:div
-      (map-indexed
-        (fn [idx c]
-          (let [creatures (cursor current-encounter [:creatures])]
-            ^{:key (:key c)} [creature
-                              c
-                              creatures
-                              idx
-                              started?
-                              active-creature]))
-        creatures)]
+     (let [indexed-creatures (map-indexed (fn [idx c] [idx c]) creatures)
+           f (fn [[idx c]]
+               (let [creatures (cursor current-encounter [:creatures])]
+                 ^{:key (:key c)} [creature
+                                   c
+                                   creatures
+                                   idx
+                                   started?
+                                   active-creature]))]
+       [:div
+        [:div
+         (map f (drop active-creature indexed-creatures))]
+        [:hr]
+        [:div
+         (map f (take active-creature indexed-creatures))]])
      #_(debug-out "state" @current-encounter)]))
 
 (defn read-creatures
